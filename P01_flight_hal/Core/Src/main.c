@@ -98,14 +98,25 @@ int main(void)
   MX_TIM4_Init();
   MX_SPI1_Init();
   MX_I2C1_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
-  //实现�??初的日志输出打印
+  //实现�???初的日志输出打印
   // HAL_UART_Transmit(&huart2, "Hello World!\n", 13, 1000);
   
   //输出带有原码名称和行号的日志信息
   // debug_printf("Hello %s\n", "World");
   Int_SI24R1_Init();//初始化SI24R1
+  //单独测试电机启动�?
+  // extern Motor_Struct left_top_motor;
+  // extern Motor_Struct right_top_motor;
+  // right_top_motor.speed = 0;
+  // left_top_motor.speed = 0;
+  // Int_motor_set_speed(&right_top_motor);
+  // Int_motor_set_speed(&left_top_motor);
+  // Int_motor_start(&left_top_motor);
+  // Int_motor_start(&right_top_motor);
+  // while(1);
   App_FreeRTOS_start();//启动Freertos
 
   /* USER CODE END 2 */

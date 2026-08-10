@@ -14,7 +14,7 @@ void Int_motor_set_speed(Motor_Struct* motor)
         debug_printf("motor speed is too fast: %d\n", motor->speed);
         return;
     }
-    __HAL_TIM_SET_COMPARE(motor->tim, motor->channel, motor->speed);
+    __HAL_TIM_SET_COMPARE(motor->tim, motor->channel, motor->speed);//设置比较值
 }
 
 /**

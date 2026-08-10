@@ -92,7 +92,6 @@ void power_task(void *pvParameters)//电源管理任务
         }
     }
 }
-
 void flight_task(void *pvParameters)//飞控任务
 {
     //获取当前基准时间
@@ -102,13 +101,10 @@ void flight_task(void *pvParameters)//飞控任务
     {
         //1.获取飞行角度数据：
         App_flight_get_euler_angle();
-
         //2.根据当前飞行欧拉角进行PID计算控制：
         App_flight_pid_process();
-
         //3.根据PID计算结果对电机进行控制：
         App_flight_control_motor();
-
         vTaskDelayUntil(&LastWakeTime, FLIGHT_TASK_PERIOD);//任务周期
     }
 }
@@ -134,7 +130,7 @@ void led_task(void *pvParameters)//led灯任务
         else
         {
             //遥控器断开连接，关闭前两个灯
-            debug_printf("FAIL TO CON\n");
+            // debug_printf("FAIL TO CON\n");
             int_led_turn_off(&left_top_led);
             int_led_turn_off(&right_top_led);
         }

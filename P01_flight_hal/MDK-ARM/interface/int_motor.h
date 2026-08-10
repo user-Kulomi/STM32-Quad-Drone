@@ -10,7 +10,7 @@ typedef struct
    //定时器通道
    uint16_t channel;
    //定时器PWM占空比，决定了电机转速
-   uint16_t speed;
+   int16_t speed;//考虑到速度可能为负值，要将类型设置为int16
 }Motor_Struct;//电机结构体
 
 void Int_motor_set_speed(Motor_Struct* motor);

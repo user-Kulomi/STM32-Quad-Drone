@@ -91,7 +91,7 @@ void process_connect_state(uint8_t res)
         Try_count++; //增加尝试连接次数
         if(Try_count >= MAX_RETRY_CONNECT_COUNT)
         {
-            debug_printf("DISCON!");
+            // debug_printf("DISCON!");
             remote_state = REMOTE_DISCONNECT; //连接失败
             Try_count = 0; //重置尝试连接次数
         }

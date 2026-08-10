@@ -12,5 +12,6 @@
 #include "App_receive_data.h"
 #include "App_flight.h"
 #include "Com_pid.h"
+#include "int_motor.h"
 
 #endif // APP_FREERTOS_TASK_H 
