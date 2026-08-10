@@ -4,6 +4,7 @@
 #include "Int_SI24R1.h"
 #include "Com_config.h"
 #include "string.h"
+#include "Int_VL53L1X.h"
 //定义帧头校验值：
 #define FRAME_HEAD_CHECK_VALUE_1 'k'
 #define FRAME_HEAD_CHECK_VALUE_2 'l'

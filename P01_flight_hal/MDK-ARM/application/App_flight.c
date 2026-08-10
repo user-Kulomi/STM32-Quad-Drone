@@ -4,6 +4,8 @@ Gyro_Accel_struct gyro_acc_data; // 存储陀螺仪和加速度计数据的结�
 Euler_struct euler_angle_data; // 存储欧拉角数据的结构体
 Gyro_struct last_gyro_data; 
 
+extern uint16_t fix_height;//按下定高的瞬间，记录下的飞行高度
+
 extern Flight_State flight_state;//飞行状态
 extern Remote_Data remote_data;//遥控器数据
 
@@ -22,6 +24,11 @@ extern PID_Struct yaw_pid;
 //Z轴角速度结构体，对应偏航角的内环：
 extern PID_Struct gyro_z_pid;
 
+//定高PID结构体：
+extern PID_Struct height_pid;
+
+//通信任务句柄:
+extern TaskHandle_t com_task_handle;
 
 //四个方位的电机初始化：
 Motor_Struct left_top_motor = {.tim = &htim3, .channel = TIM_CHANNEL_1 ,.speed = 0};
@@ -44,6 +51,9 @@ void App_flight_init(void)
     Int_motor_start(&left_bottom_motor);
     Int_motor_start(&right_top_motor);
     Int_motor_start(&right_bottom_motor);
+
+    //激光测距仪初始化：
+    Int_VL53L1X_Init();
 }
 
 /**
@@ -149,26 +159,38 @@ void App_flight_control_motor(void)
         {
             //根据PID输出值调整电机转速：（逻辑见末尾注解）
             left_top_motor.speed = remote_data.thr + gyro_y_pid.output
-            - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100);
+             - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100);
 
             left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
-            - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100); 
+             - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100); 
 
             right_top_motor.speed = remote_data.thr + gyro_y_pid.output
-            + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100);
+             + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100);
 
             right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
-            + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100); 
+             + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100); 
             break;
         }
         case FIX_HEIGHT:
         {
+            //进入定高，需要进行定高PID计算以保持平稳飞行：
+            //算上定高PID计算结果：
+            left_top_motor.speed = remote_data.thr + gyro_y_pid.output
+             - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100) + height_pid.output;
 
+            left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
+             - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100) + height_pid.output; 
+
+            right_top_motor.speed = remote_data.thr + gyro_y_pid.output
+             + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100) + height_pid.output;
+
+            right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
+             + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100) + height_pid.output; 
             break;
         }
         case FAIL:
         {
-
+            //进行故障处理:（一直处理直到满足条件再将状态改为IDLE）
             break;
         }
         default:
@@ -198,13 +220,29 @@ void App_flight_control_motor(void)
     Int_motor_set_speed(&right_bottom_motor);
 }
 
+/**
+* @brief 进入定高之后的PID计算
+*/
+void App_flight_fix_height_pid_process(void)
+{
+    //24ms计算一次PID：
+
+    //1.填写目标值与测量值：
+    //目标值为按下定高按键的一瞬间对应的高度值，测量值为目前测量的高度值
+    height_pid.desire = fix_height;
+    height_pid.measure = Int_VL53L1X_GetDistance();
+
+    //2.进行单环PID计算：
+    Com_PID_Calc(&height_pid);
+}
+
 /*
 =========================================================================================
                         【补充原理参考 · 文件末尾备查】
 重要提醒：本段仅为原理推导，仅供阅读参考。
 如果修改上方业务代码逻辑，务必同步更新此处描述，避免注释与代码脱节！
 
--------------------------- 1. PID混控逻辑说明(第152~162行逻辑说明) --------------------------
+-------------------------- 1. PID混控逻辑说明(第176~186行逻辑说明) --------------------------
 对本无人机的俯仰角而言，观察VOFA波形，飞机低头向前飞，会在Y轴角速度上产生一个正的误差
 所以为了抵抗向前低头的趋势以实现平稳飞行，需要施加一个抬头的反馈趋势
 在判断反馈极性时，仅需确定对应PID参数的正负而改变前后两组电机的加减速度配置，即可得出对应产生的飞行方向反馈趋势。反之也成立。
@@ -212,7 +250,7 @@ void App_flight_control_motor(void)
 故在俯仰角PID参数全为正时，要将前两个电机调快，后两个电机调慢。其余方向同理，都需要通过试验得到合理的反馈极性。
 而调快与调慢的值均等于PID在对应轴上的输出反馈值。合并所有方向的反馈值即可完成对所有方向的PID调整。
 综上，对应电机的速度应等于遥控器的油门数据加上或减去所有方向PID的输出反馈值，不同重要程度的PID控制结果可以进行适当的权重控制
-需要注意的是偏航角的电机加减调整是按对角分组，俯仰角是前后分组，横滚角是左右分组
+需要注意的是偏航角的电机加减调整是按对角分组，俯仰角是前后分组，横滚角是左右分组，定高是四机同组
 -------------------------- 2. 遥控器角度换算(第112行逻辑说明) --------------------------
 需要将遥控器的数据(0~1000)转换为±10°的角度值。0代表平稳飞行，非0代表用户想要产生俯仰角。
 遥控器初始位置对应的值为500，要看遥控器目前的值与初始值的差值来换算出用户想要飞机产生的俯仰角；

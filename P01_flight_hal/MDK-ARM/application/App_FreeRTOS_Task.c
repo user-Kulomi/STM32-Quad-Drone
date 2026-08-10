@@ -16,6 +16,8 @@ Flight_State flight_state = IDLE;
 //表示接受到的遥控器数据：
 Remote_Data remote_data = {.thr = 0, .yaw = 500, .pit = 500, .rol = 500, .fix_height = 0, .shutdown = 0};//将俯仰角，横滚角与偏航角初始化为500，其余均为0
 
+//按下定高的瞬间，记录下的飞行高度
+uint16_t fix_height = 0;
 //定义各个任务：
 
 //电源管理任务
@@ -96,15 +98,33 @@ void flight_task(void *pvParameters)//飞控任务
 {
     //获取当前基准时间
     TickType_t LastWakeTime = xTaskGetTickCount();//获取当前基准时间,作为下面vTaskDelayUntil函数的参数
+    uint8_t count = 0;
     App_flight_init();//飞控任务初始化
     while (1)
     {
         //1.获取飞行角度数据：
         App_flight_get_euler_angle();
+
         //2.根据当前飞行欧拉角进行PID计算控制：
         App_flight_pid_process();
+
+        //3.判断定高：
+        if(flight_state == FIX_HEIGHT)//进入定高状态，获取一次高度
+        {
+            count++;
+            if(count >= 4)//共计4*6=24ms进行一次PID计算
+            {
+                App_flight_fix_height_pid_process();
+                count = 0;
+            }
+        }
+
         //3.根据PID计算结果对电机进行控制：
         App_flight_control_motor();
+
+        //4.打印激光测距仪测量的距离值：
+        // uint16_t distence = Int_VL53L1X_GetDistance();
+        // debug_printf(":%d\r\n", distence);
         vTaskDelayUntil(&LastWakeTime, FLIGHT_TASK_PERIOD);//任务周期
     }
 }

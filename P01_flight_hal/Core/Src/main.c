@@ -107,7 +107,8 @@ int main(void)
   //输出带有原码名称和行号的日志信息
   // debug_printf("Hello %s\n", "World");
   Int_SI24R1_Init();//初始化SI24R1
-  //单独测试电机启动�?
+
+  // //单独测试电机启动
   // extern Motor_Struct left_top_motor;
   // extern Motor_Struct right_top_motor;
   // right_top_motor.speed = 0;
@@ -117,6 +118,7 @@ int main(void)
   // Int_motor_start(&left_top_motor);
   // Int_motor_start(&right_top_motor);
   // while(1);
+
   App_FreeRTOS_start();//启动Freertos
 
   /* USER CODE END 2 */

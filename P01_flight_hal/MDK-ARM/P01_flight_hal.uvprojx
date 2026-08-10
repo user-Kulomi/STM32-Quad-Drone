@@ -1158,6 +1158,56 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>interface/fix_height</GroupName>
+          <Files>
+            <File>
+              <FileName>vl53l1_platform.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\interface\fix_height\vl53l1_platform.c</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l1_platform.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface\fix_height\vl53l1_platform.h</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l1_types.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface\fix_height\vl53l1_types.h</FilePath>
+            </File>
+            <File>
+              <FileName>VL53L1X_api.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\interface\fix_height\VL53L1X_api.c</FilePath>
+            </File>
+            <File>
+              <FileName>VL53L1X_api.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface\fix_height\VL53L1X_api.h</FilePath>
+            </File>
+            <File>
+              <FileName>VL53L1X_calibration.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\interface\fix_height\VL53L1X_calibration.c</FilePath>
+            </File>
+            <File>
+              <FileName>VL53L1X_calibration.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface\fix_height\VL53L1X_calibration.h</FilePath>
+            </File>
+            <File>
+              <FileName>Int_VL53L1X.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\interface\fix_height\Int_VL53L1X.c</FilePath>
+            </File>
+            <File>
+              <FileName>Int_VL53L1X.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface\fix_height\Int_VL53L1X.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>

@@ -12,6 +12,9 @@ Thr_State thr_state = FREE;//油门状态，默认空闲状态
 
 uint8_t Try_count = 0; //尝试连接次数
 
+extern uint16_t fix_height;//按下定高的瞬间，记录下的飞行高度
+
+
 /** 
 * @brief 接收遥控器发送的数据
 *
@@ -188,7 +191,7 @@ static uint8_t App_process_unlock(void)
 void process_flight_state(void)
 {
     static uint16_t disconnect_timer = 0;//失联计时数
-    //使用状态机逻辑实现
+    //使用状态机逻辑实现飞行状态处理：
 
     //轮询调用判断当前飞行状态：
     switch(flight_state)
@@ -207,6 +210,9 @@ void process_flight_state(void)
             if(remote_data.fix_height == 1)
             {
                 flight_state = FIX_HEIGHT; //收到切换定高状态指令，进入定高状态
+                //进入定高，立刻计算并存储一次高度值，当做定高PID的目标值：
+                fix_height = Int_VL53L1X_GetDistance();
+                
                 remote_data.fix_height = 0; //清除切换定高状态指令，避免重复进入定高分支导致运行异常
                 disconnect_timer = 0;//清零失联计时数
             }
