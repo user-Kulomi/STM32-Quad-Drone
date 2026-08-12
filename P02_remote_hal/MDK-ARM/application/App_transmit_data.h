@@ -9,7 +9,6 @@
 #define FRAME_HEAD_CHECK_VALUE_2 'l'
 #define FRAME_HEAD_CHECK_VALUE_3 'm'
 
-extern Remote_Data remote_data;
 
 
 /**

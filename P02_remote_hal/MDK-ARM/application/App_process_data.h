@@ -15,7 +15,8 @@ typedef struct
     int16_t rol;        //翻滚
     uint8_t shutdown;   //关机（默认为0，为0代表不改变状态，为1代表执行关机操作）
     uint8_t fix_height; //定高（默认为0，为0代表不改变状态，为1代表执行定高操作）
-} Remote_Data;          
+} Remote_Data;     
+     
 /**
  * @brief 处理按键数据：如果有按键按下，则进行对应的记录
  * 

@@ -6,6 +6,8 @@
 #include "freertos.h"
 #include "task.h"
 
+#define CHANNEL 40
+
 void Int_SI24R1_FlushRX(void);
 void Int_SI24R1_FlushTX(void);
 //(1).stm32使用SI24R1需要在cubemx中配置SPI

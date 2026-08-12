@@ -150,7 +150,7 @@ void led_task(void *pvParameters)//led灯任务
         else
         {
             //遥控器断开连接，关闭前两个灯
-            // debug_printf("FAIL TO CON\n");
+            debug_printf("FAIL TO CON\n");
             int_led_turn_off(&left_top_led);
             int_led_turn_off(&right_top_led);
         }

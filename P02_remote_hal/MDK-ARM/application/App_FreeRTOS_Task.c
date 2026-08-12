@@ -28,6 +28,12 @@ void joystick_task(void *pvParameters);
 TaskHandle_t joystick_task_handle;
 #define JOYSTICK_TASK_PERIOD 20 //任务周期
 
+//屏幕任务
+void oled_task(void *pvParameters);
+#define OLED_TASK_STACK_SIZE  128
+#define OLED_TASK_PRIORITY    1
+TaskHandle_t oled_task_handle;
+#define OLED_TASK_PERIOD 100 //任务周期
 /*
     启动FreeRTOS：
 */
@@ -44,6 +50,9 @@ void App_FreeRTOS_start(void)
 
     //4.创建摇杆任务
     xTaskCreate(joystick_task, "joystick_task", JOYSTICK_TASK_STACK_SIZE, NULL, JOYSTICK_TASK_PRIORITY, &joystick_task_handle);
+
+    //5.创建屏幕显示任务
+    xTaskCreate(oled_task, "oled_task", OLED_TASK_STACK_SIZE, NULL, OLED_TASK_PRIORITY, &oled_task_handle);
 
     //启动调度器
     vTaskStartScheduler();
@@ -95,4 +104,16 @@ void joystick_task(void *pvParameters)//摇杆任务
         vTaskDelayUntil(&LastWakeTime, JOYSTICK_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
     }
 }
+
+void oled_task(void *pvParameters)
+{
+    TickType_t LastWakeTime = xTaskGetTickCount();//获取当前基准时间,作为下面vTaskDelayUntil函数的参数
+    oled_display_init();
+    while (1)
+    {
+        oled_display_show();
+        vTaskDelayUntil(&LastWakeTime, COM_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
+    }
+}
+
 
