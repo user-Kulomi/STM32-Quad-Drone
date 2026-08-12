@@ -216,7 +216,7 @@ void com_task(void *pvParameters)//通信任务
             xTaskNotifyGive(power_task_handle);
         }
 
-        //4.处理飞行状态：
+        //4.处理飞行状态：（若处于故障状态，会一直等待飞控任务的通知）
         process_flight_state();
 
         //6ms执行一次（接收数据时间间隔应该等于发送数据时间间隔）

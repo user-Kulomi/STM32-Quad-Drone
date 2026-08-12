@@ -248,8 +248,8 @@ void process_flight_state(void)
         }
         case FAIL:
         {
-            //缓慢关闭电机，直接降落并返回空闲状态 
-            vTaskDelay(1); //延时1ms，模拟电机关闭
+            //缓慢关闭电机，直接降落并返回空闲状态
+            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//一直等待，直到故障处理完成
             flight_state = IDLE; //返回空闲状态，等待下一次解锁
             break;
         }

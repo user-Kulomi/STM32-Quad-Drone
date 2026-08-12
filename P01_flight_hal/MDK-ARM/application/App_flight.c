@@ -136,6 +136,7 @@ void App_flight_pid_process(void)
     Com_PID_Calc_chain(&yaw_pid, &gyro_z_pid);
 
 }
+uint8_t flag = 1;
 
 /**
  * @brief 控制电机
@@ -191,6 +192,26 @@ void App_flight_control_motor(void)
         case FAIL:
         {
             //进行故障处理:（一直处理直到满足条件再将状态改为IDLE）
+            //速度降低1点，配合任务周期，就是6ms降低1点：
+            if(flag == 1)//每次来到故障处理，先将电机速度调为一致，后续再一起降速，保证平稳
+            {
+                flag -= 1;
+                left_top_motor.speed = 200;
+                left_bottom_motor.speed = 200;
+                right_top_motor.speed = 200;
+                right_bottom_motor.speed = 200;
+            }
+            left_top_motor.speed -= 1;
+            left_bottom_motor.speed -= 1;
+            right_top_motor.speed -= 1;
+            right_bottom_motor.speed -= 1;
+            if(left_top_motor.speed <= 0 && left_bottom_motor.speed <= 0 
+              && right_top_motor.speed <= 0 &&  right_bottom_motor.speed <= 0)
+            {
+                //速度降为0，故障处理完成，发送任务通知：
+                xTaskNotifyGive(com_task_handle);
+                flag = 1;
+            }
             break;
         }
         default:
