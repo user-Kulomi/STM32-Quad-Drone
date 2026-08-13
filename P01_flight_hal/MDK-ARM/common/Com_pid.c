@@ -24,24 +24,24 @@ PID_Struct height_pid = {.kp = -0.60, .ki = 0.0, .kd = -0.20};
 void Com_PID_Calc(PID_Struct* pid)
 {
     //1.计算误差值 = 目标值 - 测量值
-    pid -> err = pid -> measure - pid -> desire;
+    pid->err = pid->measure - pid->desire;
 
-    //2.计算积分误差 = 积分系数 * 误差值 * 间隔时间
-    pid -> integral += pid -> err ;//先将误差值加起来，后面再乘积分系数与间隔时间
+    //2.计算积分误差
+    pid->integral += pid->err ;
 
-    //3.计算微分误差 = (误差值 - 上一次误差值) / 间隔时间
-    if(pid -> last_err == 0)//上次误差第一次为0，故第一次不计算微分误差，提高稳定性
+    //3.计算微分误差
+    if(pid->last_err == 0)//上次误差第一次为0，故第一次不计算微分误差，提高稳定性
     {
-        pid -> last_err = pid -> err;
+        pid->last_err = pid->err;
     }
 
-    float der = pid -> err - pid -> last_err;//先将前后两次误差值相减的结果累加，后面再乘微分系数，除积分时间
+    float der = pid->err - pid->last_err;
 
-    //4.计算输出结果 = 比例部分*比例部分系数 + 积分误差部分*积分部分系数 + 微分误差部分*微分部分系数
-    pid -> output = (pid -> kp * pid -> err) + (pid -> ki * pid -> integral * PERIOD) + (pid -> kd * der / PERIOD);
+    //4.计算输出结果 = 比例系数*误差值 + 积分误差*积分系数*间隔时间 + 微分误差*微分系数/间隔时间
+    pid->output = (pid->kp * pid->err) + (pid->integral * pid->ki  * PERIOD) + (der * pid->kd  / PERIOD);
 
     //5.更新上一次误差值
-    pid -> last_err = pid -> err;
+    pid->last_err = pid->err;
 }
 
 //串级PID计算:

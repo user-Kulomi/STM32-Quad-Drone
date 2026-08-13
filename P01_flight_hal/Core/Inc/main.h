@@ -73,6 +73,8 @@ void Error_Handler(void);
 #define LED2_GPIO_Port GPIOA
 #define LED1_Pin GPIO_PIN_12
 #define LED1_GPIO_Port GPIOA
+#define BAT_ADC_EN_Pin GPIO_PIN_5
+#define BAT_ADC_EN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

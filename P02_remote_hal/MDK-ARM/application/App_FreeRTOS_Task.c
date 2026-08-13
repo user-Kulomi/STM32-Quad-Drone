@@ -12,7 +12,8 @@ void com_task(void *pvParameters);
 #define COM_TASK_STACK_SIZE  128
 #define COM_TASK_PRIORITY    3
 TaskHandle_t com_task_handle;
-#define COM_TASK_PERIOD 6 //任务周期
+#define COM_TASK_PERIOD 10
+ //任务周期
 
 //按键任务
 void key_task(void *pvParameters);
@@ -34,6 +35,9 @@ void oled_task(void *pvParameters);
 #define OLED_TASK_PRIORITY    1
 TaskHandle_t oled_task_handle;
 #define OLED_TASK_PERIOD 100 //任务周期
+
+extern uint8_t Receive_Data_Buffer[TX_PLOAD_WIDTH];
+
 /*
     启动FreeRTOS：
 */
@@ -76,11 +80,15 @@ uint8_t com_buf[TX_PLOAD_WIDTH] = {0};
 void com_task(void *pvParameters)//通信任务
 {
     //获取当前基准时间
-    TickType_t LastWakeTime = xTaskGetTickCount();//获取当前基准时间,作为下面vTaskDelayUntil函数的参数
+    // TickType_t LastWakeTime = xTaskGetTickCount();//获取当前基准时间,作为下面vTaskDelayUntil函数的参数
     while (1)
     {
         App_transmit_Data();
-        vTaskDelayUntil(&LastWakeTime, COM_TASK_PERIOD);//6ms执行一次
+        //通信任务若使用vTaskDelayUntil会导致遥控器发送数据与飞机接收数据的频率固定为10ms
+        //如果遥控器发送数据起始时间与飞机接收数据起始时间不一样，那么就会造成永久错位，导致遥控器累计重发次数过大，造成异常
+        //所以两端应同时使用vtaskdelay保证在第一次数据对接完成后，将来的数据收发永远同步，避免问题
+        // debug_printf("%s\n",Receive_Data_Buffer);
+        vTaskDelay(COM_TASK_PERIOD);//10ms执行一次
     }
 }
 

@@ -269,7 +269,7 @@ uint8_t Int_SI24R1_TxPacket(uint8_t *txbuf)
 		vTaskDelay(1);//vtask延时1ms，以免函数阻塞导致低优先级任务无法执行
 	}
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + STATUS, state); // 清除TX_DS或MAX_RT中断标志
-	if (state & MAX_RT)										// 达到最大重发次数
+	if (state & MAX_RT)	// 达到最大重发次数
 	{
 		Int_SI24R1_FlushTX(); // 手动清除TX FIFO寄存器，因为达到最大重发次数不会自动清除TX FIFO寄存器
 		return 1;//达到最大重发次数，发送失败，返回1

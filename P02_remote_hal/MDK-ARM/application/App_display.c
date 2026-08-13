@@ -2,6 +2,9 @@
 
 extern Remote_Data remote_Data;
 
+extern uint8_t Receive_Data_Buffer[TX_PLOAD_WIDTH];
+
+
 void App_display_show_bar(uint8_t x, uint8_t y, uint8_t count)
 {
     if(count < 13)//进度条长度只有12种状态，防止越界
@@ -34,11 +37,18 @@ void oled_display_show(void)
         OLED_Show_CH(LINE1_BEGIN_X + 12 * i, Y0, i, 12, 1);//(1) X坐标 (2) Y坐标 (3)字符串 (4)字体大小 (5)模式(黑底白字)
     }
 
-    //第二行：2.4G通信信道
+    //第二行：2.4G通信信道与电压值：
+    //2.4G信道：
     uint8_t buff[3] = {0};
     sprintf((char*) buff, "%03d", CHANNEL);//将信道值转换为字符串，存储在buff中
-    OLED_ShowString(LINE2_BEGIN1_X, Y1, "PATH:", 12, 1);
+    OLED_ShowString(LINE2_BEGIN1_X, Y1, "C:", 12, 1);
     OLED_ShowString(LINE2_BEGIN2_X, Y1, buff, 12, 1);
+
+    //电压值：
+    OLED_ShowString(LINE2_BEGIN1_X + 50, Y1, "V:", 12, 1);
+    OLED_ShowString(LINE2_BEGIN1_X + 64, Y1, Receive_Data_Buffer, 12, 1);
+    // debug_printf("%s\n", Receive_Data_Buffer);
+
     
     //第三行：展示遥控数据: THR,ROL
     //THR:

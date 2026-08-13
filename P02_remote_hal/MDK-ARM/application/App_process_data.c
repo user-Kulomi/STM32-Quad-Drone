@@ -143,14 +143,14 @@ void App_process_joystick_data(void)
 	joystick.rol = 1000 - joystick.rol * 1000 / 4095;
 
     //3.处理零偏校准：
-    //校准逻辑：原数据减去零偏移量（原始值减去其相对 期望值偏移的量）
+    //校准逻辑：目前摇杆所在位置对应的数据（原始值）减去零偏移量（原始值减去其相对 期望值偏移的量）
 	joystick.thr -= thr_offset;
 	joystick.yaw -= yaw_offset;
 	joystick.pit -= pit_offset;
 	joystick.rol -= rol_offset;
     
     //4.考虑按键的微调值:
-    //微调逻辑：将微调值加到原始值上，参与后续的更新
+    //微调逻辑：将微调值加到目前摇杆所在位置对应的数据上，参与后续的更新
     joystick.pit += key_pit_offset;
     joystick.rol += key_rol_offset;
 
@@ -159,7 +159,7 @@ void App_process_joystick_data(void)
     joystick.yaw = Com_limit(joystick.yaw, 0, 1000);
     joystick.pit = Com_limit(joystick.pit, 0, 1000);
     joystick.rol = Com_limit(joystick.rol, 0, 1000);
-
+    
     //6.将处理后的摇杆数据更新到遥控器数据结构体中：
     remote_Data.thr = joystick.thr;
 	remote_Data.yaw = joystick.yaw;

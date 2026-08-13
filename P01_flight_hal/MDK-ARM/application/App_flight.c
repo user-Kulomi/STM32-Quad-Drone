@@ -191,7 +191,7 @@ void App_flight_control_motor(void)
         case FAIL:
         {
             //进行故障处理:（一直处理直到满足条件再将状态改为IDLE）
-            //速度降低2点，配合任务周期，就是6ms降低2点：
+            //速度降低1点，配合任务周期，就是6ms降低1点：
             if(flag == 1)
             {
                 flag -= 1;
@@ -252,6 +252,8 @@ void App_flight_fix_height_pid_process(void)
     //目标值为按下定高按键的一瞬间对应的高度值，测量值为目前测量的高度值
     height_pid.desire = fix_height;
     height_pid.measure = Int_VL53L1X_GetDistance();
+    // debug_printf("d = %.2f,m = %.2f\n", height_pid.desire + 0.0, height_pid.measure + 0.0);
+
 
     //2.进行单环PID计算：
     Com_PID_Calc(&height_pid);
@@ -263,7 +265,7 @@ void App_flight_fix_height_pid_process(void)
 重要提醒：本段仅为原理推导，仅供阅读参考。
 如果修改上方业务代码逻辑，务必同步更新此处描述，避免注释与代码脱节！
 
--------------------------- 1. PID混控逻辑说明(第176~186行逻辑说明) --------------------------
+-------------------------- 1. PID混控逻辑说明(第161~188行逻辑说明) --------------------------
 对本无人机的俯仰角而言，观察VOFA波形，飞机低头向前飞，会在Y轴角速度上产生一个正的误差
 所以为了抵抗向前低头的趋势以实现平稳飞行，需要施加一个抬头的反馈趋势
 在判断反馈极性时，仅需确定对应PID参数的正负而改变前后两组电机的加减速度配置，即可得出对应产生的飞行方向反馈趋势。反之也成立。

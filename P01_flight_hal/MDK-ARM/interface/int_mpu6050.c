@@ -43,7 +43,7 @@ void Int_MPU6050_calculate_offset(void)
 {
     //1.等待飞机放置平稳
 
-    //判断依据：加速度三个轴的数据跳动范围持续小于200，达到100次，即代表放置平稳
+    //判断依据：加速度三个轴的数据跳动范围持续小于STABLE_COND_FLUCTUATION_ALLOW_VAL_ACC，达到100次，即代表放置平稳
     Acc_struct last_data = {0};
     Acc_struct current_data = {0};
     uint8_t count = 0;
@@ -51,7 +51,7 @@ void Int_MPU6050_calculate_offset(void)
     //获取加速度到last_data:
     Int_MPU6050_Get_Acc(&last_data);
 
-    //轮询数值波动小于200的次数，直到大于100次:
+    //轮询数值波动小于允许值STABLE_COND_FLUCTUATION_ALLOW_VAL_ACC的次数，直到大于100次:
     while(count < 100)
     {
         Int_MPU6050_Get_Acc(&current_data);

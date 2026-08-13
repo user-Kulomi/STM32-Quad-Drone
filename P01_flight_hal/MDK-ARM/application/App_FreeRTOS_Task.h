@@ -13,5 +13,6 @@
 #include "App_flight.h"
 #include "Com_pid.h"
 #include "int_motor.h"
+#include "int_bat_ADC.h"
 
 #endif // APP_FREERTOS_TASK_H 

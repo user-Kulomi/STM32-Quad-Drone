@@ -18,6 +18,10 @@ Remote_Data remote_data = {.thr = 0, .yaw = 500, .pit = 500, .rol = 500, .fix_he
 
 //按下定高的瞬间，记录下的飞行高度
 uint16_t fix_height = 0;
+
+//将电池电压以数组的形式存储，方便发送
+uint8_t VBAT_TX[TX_PLOAD_WIDTH] = {0};
+
 //定义各个任务：
 
 //电源管理任务
@@ -44,9 +48,9 @@ TaskHandle_t led_task_handle;
 //通信任务
 void com_task(void *pvParameters);
 #define COM_TASK_STACK_SIZE  128
-#define COM_TASK_PRIORITY    2
+#define COM_TASK_PRIORITY    4//将优先级提高到4，避免被其他任务阻塞，与遥控器发送时序严格匹配
 TaskHandle_t com_task_handle;
-#define COM_TASK_PERIOD 6 //任务周期
+#define COM_TASK_PERIOD 10 //任务周期
 
 //启动FreeRTOS：
 
@@ -70,12 +74,9 @@ void App_FreeRTOS_start(void)
 
 void power_task(void *pvParameters)//电源管理任务
 {
-    //获取当前基准时间
-    TickType_t LastWakeTime = xTaskGetTickCount();//获取当前基准时间,作为下面vTaskDelayUntil函数的参数
     while (1)
     {
         // //由于电源管理芯片会在一段时间后休眠，所以需要每10s启动一次电源，避免电源关闭
-        // vTaskDelayUntil(&LastWakeTime, POWER_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
         // //启动电源：
         // Int_IP5305T_start();
 
@@ -109,6 +110,7 @@ void flight_task(void *pvParameters)//飞控任务
         App_flight_pid_process();
 
         //3.判断定高：
+        // debug_printf("%d\n", fix_height);
         if(flight_state == FIX_HEIGHT)//进入定高状态，获取一次高度
         {
             count++;
@@ -119,10 +121,10 @@ void flight_task(void *pvParameters)//飞控任务
             }
         }
 
-        //3.根据PID计算结果对电机进行控制：
+        //4.根据PID计算结果对电机进行控制：
         App_flight_control_motor();
 
-        //4.打印激光测距仪测量的距离值：
+        //5.打印激光测距仪测量的距离值：
         // uint16_t distence = Int_VL53L1X_GetDistance();
         // debug_printf(":%d\r\n", distence);
         vTaskDelayUntil(&LastWakeTime, FLIGHT_TASK_PERIOD);//任务周期
@@ -150,7 +152,7 @@ void led_task(void *pvParameters)//led灯任务
         else
         {
             //遥控器断开连接，关闭前两个灯
-            debug_printf("FAIL TO CON\n");
+            // debug_printf("FAIL TO CON\n");
             int_led_turn_off(&left_top_led);
             int_led_turn_off(&right_top_led);
         }
@@ -188,7 +190,7 @@ void led_task(void *pvParameters)//led灯任务
             int_led_turn_off(&right_bottom_led);
         }
         vTaskDelayUntil(&LastWakeTime, LED_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
-        //在末尾判断计数值是否大于10。如果大于10，则将计数值清零，方便下一次循环判断时间间隔:
+        //在末尾计数值如果大于10，则将计数值清零，方便下一次循环判断时间间隔:
         count %= 10;
     }
 }
@@ -196,13 +198,13 @@ void led_task(void *pvParameters)//led灯任务
 uint8_t rx_buf[TX_PLOAD_WIDTH + 1] = {0}; //接收数据缓冲区
 void com_task(void *pvParameters)//通信任务
 {
-    //获取当前基准时间
-    TickType_t LastWakeTime = xTaskGetTickCount();//获取当前基准时间,作为下面vTaskDelayUntil函数的参数
+    //初始化电池电压测量：
+    Int_BAT_ADC_Init();
+
     while (1)
     {
         //1.接收数据：
         uint8_t res = App_receive_data(); 
-        
         //2.根据接收结果处理连接状态：
         process_connect_state(res);
 
@@ -219,7 +221,15 @@ void com_task(void *pvParameters)//通信任务
         //4.处理飞行状态：（若处于故障状态，会一直等待飞控任务的通知）
         process_flight_state();
 
-        //6ms执行一次（接收数据时间间隔应该等于发送数据时间间隔）
-        vTaskDelayUntil(&LastWakeTime, COM_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
+        //5.获取电池电压值：
+        float voltage = Int_BAT_ADC_Read();
+        sprintf((char*)VBAT_TX, "%.2f", voltage);//将电压值传给发送数组
+
+        //10ms执行一次（接收数据时间间隔应该等于发送数据时间间隔）
+        
+        //通信任务若使用vTaskDelayUntil会导致遥控器发送数据与飞机接收数据的频率固定为10ms
+        //如果遥控器发送数据起始时间与飞机接收数据起始时间不一样，那么就会造成永久错位，导致遥控器累计重发次数过大，造成异常
+        //所以两端应同时使用vtaskdelay保证在第一次数据对接完成后，将来的数据收发永远同步，避免问题
+        vTaskDelay(COM_TASK_PERIOD);
     }
 }

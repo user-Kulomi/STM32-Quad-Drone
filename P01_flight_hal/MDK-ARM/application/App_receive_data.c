@@ -14,6 +14,8 @@ uint8_t Try_count = 0; //尝试连接次数
 
 extern uint16_t fix_height;//按下定高的瞬间，记录下的飞行高度
 
+extern uint8_t VBAT_TX[TX_PLOAD_WIDTH];
+
 
 /** 
 * @brief 接收遥控器发送的数据
@@ -22,6 +24,7 @@ extern uint16_t fix_height;//按下定高的瞬间，记录下的飞行高度
 */
 uint8_t App_receive_data(void)
 {
+    //清空接收数据缓冲区：
     memset(rx_buff, 0, TX_PLOAD_WIDTH);
 
     // //原始版本：
@@ -35,11 +38,20 @@ uint8_t App_receive_data(void)
 
     //更标准的写法：
     uint8_t rec_res = Int_SI24R1_RxPacket(rx_buff);
-    if(rec_res == 1)
+    if(rec_res == 0)//接收到数据
+    {
+        uint16_t count = 50;
+        Int_SI24R1_TX_Mode();//切换到发送模式
+        while(Int_SI24R1_TxPacket(VBAT_TX) == 1 && count--);//轮询等待发送成功，超时退出
+        Int_SI24R1_RX_Mode();//切回接收模式
+    }
+    else if(rec_res == 1)//未收到数据
     {
         // debug_printf(":未接收到数据\r\n");
         return 1;
     }
+
+    //收到数据，回传电池电压值：
 
     //对接收到的数据进行校验：
 

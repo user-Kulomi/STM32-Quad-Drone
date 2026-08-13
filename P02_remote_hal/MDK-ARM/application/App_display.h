@@ -12,7 +12,7 @@
 #define LINE3_BEGIN1_X    5
 #define LINE4_BEGIN1_X    5
 
-#define LINE2_BEGIN2_X    43
+#define LINE2_BEGIN2_X    20
 #define LINE3_BEGIN2_X    65
 #define LINE4_BEGIN2_X    65
 

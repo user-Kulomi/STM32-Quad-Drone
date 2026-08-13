@@ -5,6 +5,9 @@ extern Remote_Data remote_Data;
 //发送数据缓冲区：
 uint8_t Send_Data_Buffer[TX_PLOAD_WIDTH];
 
+//接收数据缓冲区：
+uint8_t Receive_Data_Buffer[TX_PLOAD_WIDTH];
+
 /**
  * @brief 切换SI24R1模式，将采集完成的数据打包并发送给无人机
  * 
@@ -64,17 +67,15 @@ void App_transmit_Data(void)
     Send_Data_Buffer[14] = (sum >> 16) & 0xFF;
     Send_Data_Buffer[15] = (sum >> 8) & 0xFF;
     Send_Data_Buffer[16] = sum & 0xFF;
-    // 发送前打印前5字节，验证帧头是否非0
+
     uint8_t result = Int_SI24R1_TxPacket(Send_Data_Buffer);//发送数据包
-    
-    // //检查发送结果
-    // if (result == 0)
-    // {
-    //     debug_printf(":%d, %d, %d, %d, %d\r\n", remote_Data.thr, remote_Data.yaw, remote_Data.pit, remote_Data.rol, remote_Data.shutdown);
-    // }
-    
-    //3.切换回接收模式：
-    Int_SI24R1_RX_Mode();
+    if(result == 0)//发送完成，接收数据
+    {
+        //切换回接收模式：
+        Int_SI24R1_RX_Mode();
+        uint16_t count = 500;
+        while(Int_SI24R1_RxPacket(Receive_Data_Buffer) == 1 && count--);//轮询等待接收完成，超时退出
+    }
 }
 
 
