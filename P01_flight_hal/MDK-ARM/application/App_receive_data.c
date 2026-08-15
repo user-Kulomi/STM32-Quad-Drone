@@ -51,8 +51,6 @@ uint8_t App_receive_data(void)
         return 1;
     }
 
-    //收到数据，回传电池电压值：
-
     //对接收到的数据进行校验：
 
     //1.帧头校验：
