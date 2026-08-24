@@ -67,6 +67,17 @@ Drone-project-based-on-STM32
 
 ---
 
+### 1.3 实物图片展示
+
+**无人机：**
+<img width="2100" height="2800" alt="bf62cd80f76ab7dec29fd64f724305e3" src="https://github.com/user-attachments/assets/f0aecca2-6863-4270-9d14-a45f69abb398" />
+
+**遥控器：**
+<img width="2100" height="2800" alt="88e381ffd9c8d233ad50bfe7ee185d81" src="https://github.com/user-attachments/assets/24ad9f63-d701-446e-9217-c65271413ad6" />
+
+**STlink烧录线：**
+<img width="2100" height="2800" alt="b49259136fca239e35fdfd7ea84e0243" src="https://github.com/user-attachments/assets/a7589870-ed1b-422e-ae11-d2d5849887a0" />
+
 ## 2. 项目运行
 
 ### 2.1 环境准备
