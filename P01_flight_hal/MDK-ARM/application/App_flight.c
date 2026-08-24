@@ -136,7 +136,7 @@ void App_flight_pid_process(void)
     Com_PID_Calc_chain(&yaw_pid, &gyro_z_pid);
 
 }
-uint8_t flag = 1;
+uint8_t fail_flag = 1;
 /**
  * @brief 控制电机
  * 
@@ -191,27 +191,29 @@ void App_flight_control_motor(void)
         case FAIL:
         {
             //进行故障处理:（一直处理直到满足条件再将状态改为IDLE）
-            //速度降低1点，配合任务周期，就是6ms降低1点：
-            if(flag == 1)
+            //配合任务周期，6ms降低2点速度：
+            if(fail_flag == 1)
             {
-                flag -= 1;
-                left_top_motor.speed = 200;
-                left_bottom_motor.speed = 200;
-                right_top_motor.speed = 200;
-                right_bottom_motor.speed = 200;
+                fail_flag --;
+                //四个电机转速统一取取平均值避免电机速度变化过快，同时保证下降平稳
+                uint16_t sum_Average = (left_top_motor.speed + left_bottom_motor.speed + 
+                right_top_motor.speed + right_bottom_motor.speed) / 4;
+                left_top_motor.speed = sum_Average;
+                left_bottom_motor.speed = sum_Average;
+                right_top_motor.speed = sum_Average;
+                right_bottom_motor.speed = sum_Average;
             }
-            left_top_motor.speed -= 1;
-            left_bottom_motor.speed -= 1;
-            right_top_motor.speed -= 1;
-            right_bottom_motor.speed -= 1;
+            left_top_motor.speed -= 2;
+            left_bottom_motor.speed -= 2;
+            right_top_motor.speed -= 2;
+            right_bottom_motor.speed -= 2;
             if(left_top_motor.speed <= 0 && left_bottom_motor.speed <= 0 
               && right_top_motor.speed <= 0 &&  right_bottom_motor.speed <= 0)
             {
                 //速度降为0，故障处理完成，发送任务通知：
                 xTaskNotifyGive(com_task_handle);
-                flag = 1;
+                fail_flag = 1;
             }
-            vTaskDelay(1);//追加至7ms延时，刚好1.4s降低速度为0
             break;
         }
         default:
