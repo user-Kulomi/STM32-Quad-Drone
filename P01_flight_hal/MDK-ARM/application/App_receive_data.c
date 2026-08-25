@@ -281,7 +281,6 @@ void process_flight_state(void)
         {
             if(remote_data.fix_height == 1)
             {
-                // debug_printf("FIX TO NOR: fh = %d & slf = %d", remote_data.fix_height, Slow_Flag);
                 flight_state = NORMAL; //收到取消定高指令，返回正常飞行状态
                 remote_data.fix_height = 0; //清除切换定高状态指令，避免重复进入定高分支导致运行异常
                 //强制复位缓降状态标记，避免残留:
@@ -292,6 +291,10 @@ void process_flight_state(void)
                 flight_state = FAIL; //遥控器断开连接，进入故障状态
             }
 
+            if(Slow_Flag == 1)//来到缓降状态
+            {
+                flight_state = SLOW_DOWN;
+            }
             break;
         }
         case SLOW_DOWN:

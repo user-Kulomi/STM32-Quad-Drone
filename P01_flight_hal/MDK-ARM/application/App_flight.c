@@ -221,7 +221,6 @@ void App_flight_control_motor(void)
                 right_top_motor.speed = sum_Average;
                 right_bottom_motor.speed = sum_Average;
             }
-            debug_printf("motor slowing\r\n");    
             left_top_motor.speed -= 2;
             left_bottom_motor.speed -= 2;
             right_top_motor.speed -= 2;
@@ -230,7 +229,6 @@ void App_flight_control_motor(void)
             if(left_top_motor.speed <= 0 && left_bottom_motor.speed <= 0 
                 && right_top_motor.speed <= 0 &&  right_bottom_motor.speed <= 0)
             {
-                debug_printf("Allow to IDLE\r\n");
                 set_speed = 1;//重置设置速度标志位为1
                 TO_IDLE_Flag = 1;//允许切换到空闲状态
             }
