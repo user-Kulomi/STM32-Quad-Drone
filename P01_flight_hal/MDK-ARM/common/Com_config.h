@@ -16,6 +16,7 @@ typedef enum
     NORMAL,  //正常飞行状态
     FIX_HEIGHT,//定高状态
     FAIL,    //故障状态
+    SLOW_DOWN,//缓降状态
 }Flight_State;
 
 //油门状态枚举：

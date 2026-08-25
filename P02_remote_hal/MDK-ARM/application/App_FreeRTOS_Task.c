@@ -120,7 +120,7 @@ void oled_task(void *pvParameters)
     while (1)
     {
         oled_display_show();
-        vTaskDelayUntil(&LastWakeTime, COM_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
+        vTaskDelayUntil(&LastWakeTime, OLED_TASK_PERIOD);//使用vtaskdelayuntil函数实现延时，精度更高
     }
 }
 

@@ -22,6 +22,10 @@ uint16_t fix_height = 0;
 //将电池电压以数组的形式存储，方便发送
 uint8_t VBAT_TX[TX_PLOAD_WIDTH] = {0};
 
+extern uint8_t Slow_Flag;
+
+extern Flight_State flight_state;//飞行状态
+
 //定义各个任务：
 
 //电源管理任务
@@ -106,12 +110,12 @@ void flight_task(void *pvParameters)//飞控任务
         //1.获取飞行角度数据：
         App_flight_get_euler_angle();
 
-        //2.根据当前飞行欧拉角进行PID计算控制：
+        //2.根据当前飞行欧拉角进行PID计算得到PID输出值：
         App_flight_pid_process();
 
         //3.判断定高：
         // debug_printf("%d\n", fix_height);
-        if(flight_state == FIX_HEIGHT)//进入定高状态，获取一次高度
+        if(flight_state == FIX_HEIGHT)//进入正常定高状态，获取一次高度
         {
             count++;
             if(count >= 4)//共计4*6=24ms进行一次PID计算
@@ -121,8 +125,11 @@ void flight_task(void *pvParameters)//飞控任务
             }
         }
 
-        //4.根据PID计算结果对电机进行控制：
+
+        //4.根据PID计算输出值对电机进行控制：
         App_flight_control_motor();
+
+        // debug_printf(":%.1f,%.1f,%.1f\n",pitch_pid.desire, pitch_pid.measure, gyro_y_pid.measure);
 
         //5.打印激光测距仪测量的距离值：
         // uint16_t distence = Int_VL53L1X_GetDistance();
@@ -209,7 +216,7 @@ void com_task(void *pvParameters)//通信任务
         process_connect_state(res);
 
         //3.处理关机命令：
-        if(remote_data.shutdown == 1)
+        if(remote_data.shutdown == 1 && flight_state == IDLE)//只有空闲状态时才能关机，保证飞行安全
         {
             //关机命令，关闭电源。
             //Int_IP5305T_shutdown();

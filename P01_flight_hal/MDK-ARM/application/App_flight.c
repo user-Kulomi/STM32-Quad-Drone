@@ -30,6 +30,10 @@ extern PID_Struct height_pid;
 //通信任务句柄:
 extern TaskHandle_t com_task_handle;
 
+//缓降标志位:
+extern uint8_t Slow_Flag;
+
+
 //四个方位的电机初始化：
 Motor_Struct left_top_motor = {.tim = &htim3, .channel = TIM_CHANNEL_1 ,.speed = 0};
 Motor_Struct left_bottom_motor = {.tim = &htim4, .channel = TIM_CHANNEL_4 ,.speed = 0};
@@ -136,7 +140,10 @@ void App_flight_pid_process(void)
     Com_PID_Calc_chain(&yaw_pid, &gyro_z_pid);
 
 }
-uint8_t fail_flag = 1;
+uint8_t fail_flag = 1;//故障标志位。为1代表故障
+uint8_t set_speed = 1;//设置速度标志位，用来判断是否需要在进入缓降时设置一次电机速度
+uint8_t TO_IDLE_Flag = 0;//切换到IDLE标志位，用来保证电机速度为0后再切为IDLE状态
+
 /**
  * @brief 控制电机
  * 
@@ -159,33 +166,74 @@ void App_flight_control_motor(void)
         {
             //根据PID输出值调整电机转速：（逻辑见末尾注解）
             left_top_motor.speed = remote_data.thr + gyro_y_pid.output
-             - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100);
+            - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100);
 
             left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
-             - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100); 
+            - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100); 
 
             right_top_motor.speed = remote_data.thr + gyro_y_pid.output
-             + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100);
+            + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100);
 
             right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
-             + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100); 
+            + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100); 
             break;
         }
         case FIX_HEIGHT:
         {
             //进入定高，需要进行定高PID计算以保持平稳飞行：
             //算上定高PID计算结果：
+                
             left_top_motor.speed = remote_data.thr + gyro_y_pid.output
-             - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100) + height_pid.output;
+            - gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100) + height_pid.output;
 
             left_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
-             - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100) + height_pid.output; 
+            - gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100) + height_pid.output; 
 
             right_top_motor.speed = remote_data.thr + gyro_y_pid.output
-             + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100) + height_pid.output;
+            + gyro_x_pid.output - com_limit(gyro_z_pid.output, 100, -100) + height_pid.output;
 
             right_bottom_motor.speed = remote_data.thr - gyro_y_pid.output
-             + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100) + height_pid.output; 
+            + gyro_x_pid.output + com_limit(gyro_z_pid.output, 100, -100) + height_pid.output; 
+
+            break;
+        }
+        case SLOW_DOWN:
+        {
+            //====进入临界段====
+            taskENTER_CRITICAL();
+            //缓降标志上升沿检测，每次进入缓降都重置初始化标记
+            static uint8_t last_slow_flag = 0;
+            if(Slow_Flag == 1 && last_slow_flag == 0)
+            {
+                set_speed = 1;
+                TO_IDLE_Flag = 0;
+            }
+            last_slow_flag = Slow_Flag;
+            taskEXIT_CRITICAL();        
+            //====退出临界段====
+            if(set_speed == 1)//首次来到缓降
+            {
+                set_speed = 0;
+                //四个电机转速统一取取平均值避免电机速度变化过快，同时保证下降平稳
+                uint16_t sum_Average = (left_top_motor.speed + left_bottom_motor.speed + right_top_motor.speed + right_bottom_motor.speed) / 4;
+                left_top_motor.speed = sum_Average;
+                left_bottom_motor.speed = sum_Average;
+                right_top_motor.speed = sum_Average;
+                right_bottom_motor.speed = sum_Average;
+            }
+            debug_printf("motor slowing\r\n");    
+            left_top_motor.speed -= 2;
+            left_bottom_motor.speed -= 2;
+            right_top_motor.speed -= 2;
+            right_bottom_motor.speed -= 2;
+                
+            if(left_top_motor.speed <= 0 && left_bottom_motor.speed <= 0 
+                && right_top_motor.speed <= 0 &&  right_bottom_motor.speed <= 0)
+            {
+                debug_printf("Allow to IDLE\r\n");
+                set_speed = 1;//重置设置速度标志位为1
+                TO_IDLE_Flag = 1;//允许切换到空闲状态
+            }
             break;
         }
         case FAIL:
@@ -223,10 +271,10 @@ void App_flight_control_motor(void)
     //2.设置电机速度：
 
     //限速：
-    left_top_motor.speed = com_limit(left_top_motor.speed, 400, 0);
-    left_bottom_motor.speed = com_limit(left_bottom_motor.speed, 400, 0); 
-    right_top_motor.speed = com_limit(right_top_motor.speed, 400, 0); 
-    right_bottom_motor.speed = com_limit(right_bottom_motor.speed, 400, 0); 
+    left_top_motor.speed = com_limit(left_top_motor.speed, 650, 0);
+    left_bottom_motor.speed = com_limit(left_bottom_motor.speed, 650, 0); 
+    right_top_motor.speed = com_limit(right_top_motor.speed, 650, 0); 
+    right_bottom_motor.speed = com_limit(right_bottom_motor.speed, 650, 0); 
 
     //安全机制（油门拉最小，即小于50，就把电机速度调零）：
     if(remote_data.thr <= 50)
@@ -249,13 +297,10 @@ void App_flight_control_motor(void)
 void App_flight_fix_height_pid_process(void)
 {
     //24ms计算一次PID：
-
     //1.填写目标值与测量值：
     //目标值为按下定高按键的一瞬间对应的高度值，测量值为目前测量的高度值
     height_pid.desire = fix_height;
     height_pid.measure = Int_VL53L1X_GetDistance();
-    // debug_printf("d = %.2f,m = %.2f\n", height_pid.desire + 0.0, height_pid.measure + 0.0);
-
 
     //2.进行单环PID计算：
     Com_PID_Calc(&height_pid);
@@ -267,7 +312,7 @@ void App_flight_fix_height_pid_process(void)
 重要提醒：本段仅为原理推导，仅供阅读参考。
 如果修改上方业务代码逻辑，务必同步更新此处描述，避免注释与代码脱节！
 
--------------------------- 1. PID混控逻辑说明(第161~188行逻辑说明) --------------------------
+-------------------------- 1. PID混控逻辑说明(第168~178行逻辑说明) --------------------------
 对本无人机的俯仰角而言，观察VOFA波形，飞机低头向前飞，会在Y轴角速度上产生一个正的误差
 所以为了抵抗向前低头的趋势以实现平稳飞行，需要施加一个抬头的反馈趋势
 在判断反馈极性时，仅需确定对应PID参数的正负而改变前后两组电机的加减速度配置，即可得出对应产生的飞行方向反馈趋势。反之也成立。
@@ -276,7 +321,7 @@ void App_flight_fix_height_pid_process(void)
 而调快与调慢的值均等于PID在对应轴上的输出反馈值。合并所有方向的反馈值即可完成对所有方向的PID调整。
 综上，对应电机的速度应等于遥控器的油门数据加上或减去所有方向PID的输出反馈值，不同重要程度的PID控制结果可以进行适当的权重控制
 需要注意的是偏航角的电机加减调整是按对角分组，俯仰角是前后分组，横滚角是左右分组，定高是四机同组
--------------------------- 2. 遥控器角度换算(第106行逻辑说明) --------------------------
+-------------------------- 2. 遥控器角度换算(第110行逻辑说明) --------------------------
 需要将遥控器的数据(0~1000)转换为±10°的角度值。0代表平稳飞行，非0代表用户想要产生俯仰角。
 遥控器初始位置对应的值为500，要看遥控器目前的值与初始值的差值来换算出用户想要飞机产生的俯仰角；
 差值等于(remote_data.pit - 500)，除50可以把值转换到±10；

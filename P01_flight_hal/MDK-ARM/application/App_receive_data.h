@@ -5,10 +5,12 @@
 #include "Com_config.h"
 #include "string.h"
 #include "Int_VL53L1X.h"
+#include "int_motor.h"
 //定义帧头校验值：
 #define FRAME_HEAD_CHECK_VALUE_1 'k'
 #define FRAME_HEAD_CHECK_VALUE_2 'l'
 #define FRAME_HEAD_CHECK_VALUE_3 'm'
+#define FRAME_HEAD_CHECK_VALUE_S 's'
 
 //定义最大重试连接次数：
 #define MAX_RETRY_CONNECT_COUNT  20

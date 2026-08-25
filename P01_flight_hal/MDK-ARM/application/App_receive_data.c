@@ -16,6 +16,16 @@ extern uint16_t fix_height;//按下定高的瞬间，记录下的飞行高度
 
 extern uint8_t VBAT_TX[TX_PLOAD_WIDTH];
 
+extern uint8_t set_speed;
+extern uint8_t TO_IDLE_Flag;
+
+uint8_t Slow_Flag = 0;
+uint8_t Set_Slow_Flag = 0;
+uint8_t Reset_Slow_flag = 0;
+extern Motor_Struct left_top_motor;
+extern Motor_Struct left_bottom_motor;
+extern Motor_Struct right_top_motor;
+extern Motor_Struct right_bottom_motor;
 
 /** 
 * @brief 接收遥控器发送的数据
@@ -38,7 +48,7 @@ uint8_t App_receive_data(void)
 
     //更标准的写法：
     uint8_t rec_res = Int_SI24R1_RxPacket(rx_buff);
-    if(rec_res == 0)//接收到数据
+    if(rec_res == 0)//接收到数据,回传电池电压值：
     {
         uint16_t count = 50;
         Int_SI24R1_TX_Mode();//切换到发送模式
@@ -54,10 +64,22 @@ uint8_t App_receive_data(void)
     //对接收到的数据进行校验：
 
     //1.帧头校验：
-    if(rx_buff[0] != FRAME_HEAD_CHECK_VALUE_1 || rx_buff[1] != FRAME_HEAD_CHECK_VALUE_2 || rx_buff[2] != FRAME_HEAD_CHECK_VALUE_3)
+    if(rx_buff[0] != FRAME_HEAD_CHECK_VALUE_1 || rx_buff[1] != FRAME_HEAD_CHECK_VALUE_2 || rx_buff[2] != FRAME_HEAD_CHECK_VALUE_3)//三位校验有一位不同
     {
-        // debug_printf(":帧头校验失败");
-        return 1; //帧头校验失败
+        if(rx_buff[0] == FRAME_HEAD_CHECK_VALUE_1 && rx_buff[1] == FRAME_HEAD_CHECK_VALUE_2 && rx_buff[2] == FRAME_HEAD_CHECK_VALUE_S)//第三位是's'
+        {
+            debug_printf("Set Slow = 1\r\n");
+            Set_Slow_Flag = 1;//帧尾校验后会判断Set_Slow_flag，决定要不要置Slow_flag为1
+        }
+        else
+        {
+            return 1;//帧头校验失败
+        }
+    }
+    else if(rx_buff[0] == FRAME_HEAD_CHECK_VALUE_1 && rx_buff[1] == FRAME_HEAD_CHECK_VALUE_2 && rx_buff[2] == FRAME_HEAD_CHECK_VALUE_3)//三位校验位全部相同，代表不处于缓降状态
+    {
+        debug_printf("ReSet Slow = 1\r\n");
+        Reset_Slow_flag = 1;//帧尾校验后会判断Reset_Slow_flag，决定要不要清零Slow_flag
     }
 
     //2.帧尾校验：
@@ -72,10 +94,20 @@ uint8_t App_receive_data(void)
     sum_check = rx_buff[13] << 24 | rx_buff[14] << 16 | rx_buff[15] << 8 | rx_buff[16];
     if(sum != sum_check)
     {
-        // debug_printf(":帧尾校验失败");
+        debug_printf(":帧尾校验失败");
         return 1; //帧尾校验失败
     }
 
+    if(Set_Slow_Flag == 1)
+    {
+        Slow_Flag = 1;
+        Set_Slow_Flag = 0;
+    }
+    if(Reset_Slow_flag == 1)
+    {
+        Slow_Flag = 0;
+        Reset_Slow_flag = 0;
+    }
     //3.保存数据：
     remote_data.thr = (rx_buff[3] << 8) | rx_buff[4];
     remote_data.yaw = (rx_buff[5] << 8) | rx_buff[6];
@@ -84,7 +116,7 @@ uint8_t App_receive_data(void)
     remote_data.shutdown = rx_buff[11];
     remote_data.fix_height = rx_buff[12];
 
-    // debug_printf(":%d,%d,%d,%d,%d,%d\n",remote_data.thr, remote_data.yaw, remote_data.pit, remote_data.rol, remote_data.shutdown, remote_data.fix_height);
+    debug_printf("3 = %c,Slow_Flag = %d\n",rx_buff[2], Slow_Flag);
     return 0; //数据接收并校验成功
 }
 
@@ -112,7 +144,6 @@ void process_connect_state(uint8_t res)
 }
 
 uint32_t start_time = 0;
-
 /**
 * @brief 解锁条件
 * @return uint8_t: 解锁结果。0表示解锁成功，1表示解锁失败
@@ -130,7 +161,6 @@ static uint8_t App_process_unlock(void)
                 start_time = xTaskGetTickCount(); //记录开始时间
                 //xTaskGetTickCount():FreeRTOS获取当前系统时间，单位为ms
                 thr_state = MAX; //油门拉到最大值
-                // debug_printf("油门拉到最大值\n");
             }
             break;
         }
@@ -157,7 +187,6 @@ static uint8_t App_process_unlock(void)
             {
                 start_time = xTaskGetTickCount(); //记录开始时间
                 thr_state = MIN; //油门切换到最小值状态
-                // debug_printf("油门切换到最小值状态\n");
             }
             break;
         }
@@ -212,6 +241,7 @@ void process_flight_state(void)
             {
                 flight_state = NORMAL; //解锁成功，进入正常飞行状态
                 thr_state = FREE; //解锁成功后，油门状态回归空闲状态，便于下次判断解锁
+                
             }
             break;
         }
@@ -222,9 +252,10 @@ void process_flight_state(void)
                 flight_state = FIX_HEIGHT; //收到切换定高状态指令，进入定高状态
                 //进入定高，立刻计算并存储一次高度值，当做定高PID的目标值：
                 fix_height = Int_VL53L1X_GetDistance();
-                
+                    
                 remote_data.fix_height = 0; //清除切换定高状态指令，避免重复进入定高分支导致运行异常
                 disconnect_timer = 0;//清零失联计时数
+                remote_data.fix_height = 0; //清除切换定高状态指令，避免重复进入定高分支导致运行异常
             }
             else if(remote_state == REMOTE_DISCONNECT)//中途断开连接
             {
@@ -240,20 +271,36 @@ void process_flight_state(void)
                 disconnect_timer = 0;//清零失联计时数
             }
 
+            if(Slow_Flag == 1)//来到缓降状态
+            {
+                flight_state = SLOW_DOWN;
+            }
             break;
         }
         case FIX_HEIGHT:
         {
             if(remote_data.fix_height == 1)
             {
+                // debug_printf("FIX TO NOR: fh = %d & slf = %d", remote_data.fix_height, Slow_Flag);
                 flight_state = NORMAL; //收到取消定高指令，返回正常飞行状态
                 remote_data.fix_height = 0; //清除切换定高状态指令，避免重复进入定高分支导致运行异常
+                //强制复位缓降状态标记，避免残留:
+                set_speed = 1;
             }
             else if(remote_state == REMOTE_DISCONNECT)
             {
                 flight_state = FAIL; //遥控器断开连接，进入故障状态
             }
 
+            break;
+        }
+        case SLOW_DOWN:
+        {
+            if(Slow_Flag == 0 && TO_IDLE_Flag == 1)//等待遥控器停止发送缓降信号，且电机速度减到0后TO_IDLE_Flag被置1后，才切换到IDLE状态
+            {
+                flight_state = IDLE;
+                TO_IDLE_Flag = 0;//置回标志位
+            }
             break;
         }
         case FAIL:

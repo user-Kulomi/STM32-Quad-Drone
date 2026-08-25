@@ -79,6 +79,7 @@ void App_calibrate_joystick(void)
     pit_offset = pit_sum / 10;
     rol_offset = rol_sum / 10;
 }
+uint8_t Slow_Flag = 0;
 /**
  * @brief 处理按键数据：如果有按键按下，则进行对应的记录
  * 
@@ -121,6 +122,14 @@ void App_process_key_data(void)
     {
         //右上角按键长按：更新摇杆校准数据，并清零微调值
         App_calibrate_joystick();
+    }
+    else if(Key == KEY_LEFT_X_LONG)
+    {
+        //左上角按键长按：缓降
+
+        //置缓降标志位，使得帧头第三位发送's'
+        Slow_Flag = 1;
+
     }
 }
 

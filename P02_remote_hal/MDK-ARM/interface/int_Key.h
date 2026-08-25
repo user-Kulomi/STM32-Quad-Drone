@@ -4,7 +4,7 @@
 #include "main.h"
 #include "freertos.h"
 #include "task.h"
-
+#include "Com_debug.h"
 typedef enum
 {
    KEY_NONE = 0,
@@ -13,6 +13,7 @@ typedef enum
    KEY_LEFT,
    KEY_RIGHT,
    KEY_LEFT_X,
+   KEY_LEFT_X_LONG,
    KEY_RIGHT_X,
    KEY_RIGHT_X_LONG
 }Key_type;

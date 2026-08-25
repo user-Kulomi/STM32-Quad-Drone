@@ -2,6 +2,9 @@
 
 extern Remote_Data remote_Data;
 
+extern uint8_t Slow_Flag;
+
+uint16_t slow_count = 0;
 //发送数据缓冲区：
 uint8_t Send_Data_Buffer[TX_PLOAD_WIDTH];
 
@@ -28,15 +31,29 @@ void App_transmit_Data(void)
     uint32_t sum = 0;//校验和
 
     //设置帧头校验：
-    Send_Data_Buffer[0] = FRAME_HEAD_CHECK_VALUE_1;
-    Send_Data_Buffer[1] = FRAME_HEAD_CHECK_VALUE_2;
-    Send_Data_Buffer[2] = FRAME_HEAD_CHECK_VALUE_3;
+    if(Slow_Flag == 0)//不缓降，正常发送帧头校验
+    {
+        Send_Data_Buffer[0] = FRAME_HEAD_CHECK_VALUE_1;
+        Send_Data_Buffer[1] = FRAME_HEAD_CHECK_VALUE_2;
+        Send_Data_Buffer[2] = FRAME_HEAD_CHECK_VALUE_3;
+    }
+    else//缓降，将第三位校验值设为's'
+    {
+        if((slow_count++) >= FLIGHT_SLOW_TIME_COUNT)//假设飞机在FLIGHT_SLOW_TIME_COUNT次内缓降完成
+        {
+            Slow_Flag = 0;//缓降标志清除，结束发送缓降指令
+            slow_count = 0;
+        }
+        Send_Data_Buffer[0] = FRAME_HEAD_CHECK_VALUE_1;
+        Send_Data_Buffer[1] = FRAME_HEAD_CHECK_VALUE_2;
+        Send_Data_Buffer[2] = FRAME_HEAD_CHECK_VALUE_S;//第三位校验位发送's'，代表缓降指令
+    }
 
+    debug_printf("3 = %c,Slow_Flag = %d\n",Send_Data_Buffer[2], Slow_Flag);
     //设置数据本体:
 
     //遵循高位在前:
-    Send_Data_Buffer[3] = (remote_Data.thr >> 8) & 0xFF;//高8位：高8位右移到低8位。
-                                                        //thr是16位数据，而Send_Data_Buffer存储的是8位数据，只会取低8位赋值
+    Send_Data_Buffer[3] = (remote_Data.thr >> 8) & 0xFF;//高8位：高8位右移到低8位。thr是16位数据，而Send_Data_Buffer存储的是8位数据，只会取低8位赋值
     Send_Data_Buffer[4] = remote_Data.thr & 0xFF;//低8位。这些地方加上&0xFF是为了保证数据的正确性，避免出现符号扩展的问题。
 
     Send_Data_Buffer[5] = (remote_Data.yaw >> 8) & 0xFF;
