@@ -227,6 +227,15 @@ A：检查串口线连接是否正确（TX → RX，RX → TX，GND 相连），
 
 - 飞行途中用户应确保无人机尽量减少磕碰，延长使用寿命。
 
+---
+
+## 3.项目运行视频展示
+
+
+
+https://github.com/user-attachments/assets/8141b2bb-13de-444d-b8eb-d6a9ea330f9c
+
+
 
 
 > **未完待续**
