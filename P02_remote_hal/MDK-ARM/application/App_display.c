@@ -4,6 +4,7 @@ extern Remote_Data remote_Data;
 
 extern uint8_t Receive_Data_Buffer[TX_PLOAD_WIDTH];
 
+extern uint8_t Slow_Flag;
 
 void App_display_show_bar(uint8_t x, uint8_t y, uint8_t count)
 {
@@ -26,6 +27,7 @@ void oled_display_init(void)
  * @brief 循环执行刷写屏幕
  * 
  */
+uint8_t count_bat_low = 0;
 void oled_display_show(void)
 {
     uint8_t count = 0;
@@ -44,10 +46,31 @@ void oled_display_show(void)
     OLED_ShowString(LINE2_BEGIN1_X, Y1, "C:", 12, 1);
     OLED_ShowString(LINE2_BEGIN2_X, Y1, buff, 12, 1);
 
+
     //电压值：
-    OLED_ShowString(LINE2_BEGIN1_X + 50, Y1, "V:", 12, 1);
-    OLED_ShowString(LINE2_BEGIN1_X + 64, Y1, Receive_Data_Buffer, 12, 1);
-    // debug_printf("%s\n", Receive_Data_Buffer);
+    //若电池电压小于等于3.28V，有过放风险，立刻一直执行缓降程序且在OLED上显示低电量提示。此时即使油门解锁且有数据，电机仍然无法转动
+    if(Receive_Data_Buffer[0] == '3' && Receive_Data_Buffer[2] <= '2'
+    && Receive_Data_Buffer[3] < '8' || Receive_Data_Buffer[0] < '3')
+    {
+        Slow_Flag = 1;
+        //500ms频率闪烁"BAT_LOW"：
+        count_bat_low++;
+        if(count_bat_low <= 5)
+        {
+            OLED_ShowString(LINE2_BEGIN1_X + 50, Y1, "F_BAT_LOW", 12, 1);
+        }
+        else
+        {
+            OLED_ShowString(LINE2_BEGIN1_X + 50, Y1, "         ", 12, 1);
+        }
+        count_bat_low %= 10;
+    }
+    else//正常放电区间
+    {
+        OLED_ShowString(LINE2_BEGIN1_X + 50, Y1, "V:", 12, 1);
+        OLED_ShowString(LINE2_BEGIN1_X + 64, Y1, Receive_Data_Buffer, 12, 1);
+    }
+
 
     
     //第三行：展示遥控数据: THR,ROL

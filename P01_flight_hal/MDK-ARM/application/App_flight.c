@@ -84,7 +84,6 @@ void App_flight_get_euler_angle(void)
     last_gyro_data.gyro_z = gyro_acc_data.gyro_data.gyro_z;
 
     //打印三轴角速度数据：
-    // debug_printf(":%d,%d,%d\n", gyro_acc_data.gyro_data.gyro_x, gyro_acc_data.gyro_data.gyro_y, gyro_acc_data.gyro_data.gyro_z);
 
     //3. 对于波动比较大的加速度，使用更高级的滤波方式进行滤波，即卡尔兹曼滤波：
     gyro_acc_data.acc_data.accel_x = Common_Filter_KalmanFilter(&kfs[0], gyro_acc_data.acc_data.accel_x);

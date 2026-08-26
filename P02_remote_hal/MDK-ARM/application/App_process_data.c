@@ -178,5 +178,4 @@ void App_process_joystick_data(void)
     //退出临界区：
     taskEXIT_CRITICAL();
     
-    // debug_printf(":%d, %d, %d, %d\r\n", joystick.thr, joystick.yaw, joystick.pit, joystick.rol);
 }

@@ -119,7 +119,6 @@ Key_type Int_key_get(void)
             }
             //判断是否是长按：
             TickType_t last_time = xTaskGetTickCount();
-            debug_printf("%d\n", last_time - start_time);
             if(last_time - start_time > 1000)
             {
                 return KEY_RIGHT_X_LONG;//Key_RIGHT_X被长按

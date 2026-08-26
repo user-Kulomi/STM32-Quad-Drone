@@ -57,7 +57,6 @@ uint8_t App_receive_data(void)
     }
     else if(rec_res == 1)//未收到数据
     {
-        // debug_printf(":未接收到数据\r\n");
         return 1;
     }
 
@@ -68,7 +67,6 @@ uint8_t App_receive_data(void)
     {
         if(rx_buff[0] == FRAME_HEAD_CHECK_VALUE_1 && rx_buff[1] == FRAME_HEAD_CHECK_VALUE_2 && rx_buff[2] == FRAME_HEAD_CHECK_VALUE_S)//第三位是's'
         {
-            debug_printf("Set Slow = 1\r\n");
             Set_Slow_Flag = 1;//帧尾校验后会判断Set_Slow_flag，决定要不要置Slow_flag为1
         }
         else
@@ -78,7 +76,6 @@ uint8_t App_receive_data(void)
     }
     else if(rx_buff[0] == FRAME_HEAD_CHECK_VALUE_1 && rx_buff[1] == FRAME_HEAD_CHECK_VALUE_2 && rx_buff[2] == FRAME_HEAD_CHECK_VALUE_3)//三位校验位全部相同，代表不处于缓降状态
     {
-        debug_printf("ReSet Slow = 1\r\n");
         Reset_Slow_flag = 1;//帧尾校验后会判断Reset_Slow_flag，决定要不要清零Slow_flag
     }
 
@@ -94,7 +91,6 @@ uint8_t App_receive_data(void)
     sum_check = rx_buff[13] << 24 | rx_buff[14] << 16 | rx_buff[15] << 8 | rx_buff[16];
     if(sum != sum_check)
     {
-        debug_printf(":帧尾校验失败");
         return 1; //帧尾校验失败
     }
 
@@ -116,7 +112,6 @@ uint8_t App_receive_data(void)
     remote_data.shutdown = rx_buff[11];
     remote_data.fix_height = rx_buff[12];
 
-    debug_printf("3 = %c,Slow_Flag = %d\n",rx_buff[2], Slow_Flag);
     return 0; //数据接收并校验成功
 }
 
@@ -136,7 +131,6 @@ void process_connect_state(uint8_t res)
         Try_count++; //增加尝试连接次数
         if(Try_count >= MAX_RETRY_CONNECT_COUNT)
         {
-            // debug_printf("DISCON!");
             remote_state = REMOTE_DISCONNECT; //连接失败
             Try_count = 0; //重置尝试连接次数
         }
@@ -159,7 +153,6 @@ static uint8_t App_process_unlock(void)
             if(remote_data.thr >= 900)
             {
                 start_time = xTaskGetTickCount(); //记录开始时间
-                //xTaskGetTickCount():FreeRTOS获取当前系统时间，单位为ms
                 thr_state = MAX; //油门拉到最大值
             }
             break;
@@ -171,12 +164,10 @@ static uint8_t App_process_unlock(void)
                 if(xTaskGetTickCount() - start_time >= 1000)//用户取消油门最大值时刻与之前油门达到最大值的一刻间隔时间超过1s
                 {
                     thr_state = LEAVE_MAX; //达到离开最大值状态，与后续油门拉到最小值的状态机逻辑配合实现油门解锁逻辑
-                    // debug_printf("达到离开最大值状态\n");
                 }
                 else//用户取消油门最大值时刻与之前油门达到最大值的一刻间隔时间小于1s
                 {
                     thr_state = FREE; //油门回归空闲状态
-                    // debug_printf("油门回归空闲状态\n");
                 }
             }
             break;
@@ -197,7 +188,6 @@ static uint8_t App_process_unlock(void)
                 if(xTaskGetTickCount() - start_time < 1000)//用户取消油门最小值时刻与之前油门达到最小值的一刻间隔时间小于1s
                 {
                     thr_state = FREE; //油门回归空闲状态
-                    // debug_printf("油门回归空闲状态\n");
                 }
             }
             else//用户仍保持油门最小值状态
@@ -205,7 +195,6 @@ static uint8_t App_process_unlock(void)
                 if(xTaskGetTickCount() - start_time >= 1000)//用户保持油门最小值状态超过1s，满足解锁条件
                 {
                     thr_state = UNLOCK; //油门解锁成功
-                    // debug_printf("油门解锁成功\n");
                 }
             }
             break;

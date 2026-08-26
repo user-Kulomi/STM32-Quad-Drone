@@ -114,7 +114,6 @@ void flight_task(void *pvParameters)//飞控任务
         App_flight_pid_process();
 
         //3.判断定高：
-        // debug_printf("%d\n", fix_height);
         if(flight_state == FIX_HEIGHT)//进入正常定高状态，获取一次高度
         {
             count++;
@@ -129,11 +128,8 @@ void flight_task(void *pvParameters)//飞控任务
         //4.根据PID计算输出值对电机进行控制：
         App_flight_control_motor();
 
-        // debug_printf(":%.1f,%.1f,%.1f\n",pitch_pid.desire, pitch_pid.measure, gyro_y_pid.measure);
 
         //5.打印激光测距仪测量的距离值：
-        // uint16_t distence = Int_VL53L1X_GetDistance();
-        // debug_printf(":%d\r\n", distence);
         vTaskDelayUntil(&LastWakeTime, FLIGHT_TASK_PERIOD);//任务周期
     }
 }
@@ -159,7 +155,6 @@ void led_task(void *pvParameters)//led灯任务
         else
         {
             //遥控器断开连接，关闭前两个灯
-            // debug_printf("FAIL TO CON\n");
             int_led_turn_off(&left_top_led);
             int_led_turn_off(&right_top_led);
         }
