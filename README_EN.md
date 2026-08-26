@@ -67,6 +67,17 @@ Drone-project-based-on-STM32
 
 ---
 
+### 1.3 Physical Product Images
+
+**UAV:**  
+<img width="2100" height="2800" alt="bf62cd80f76ab7dec29fd64f724305e3" src="https://github.com/user-attachments/assets/f0aecca2-6863-4270-9d14-a45f69abb398" />
+
+**Remote Controller:**  
+<img width="2100" height="2800" alt="88e381ffd9c8d233ad50bfe7ee185d81" src="https://github.com/user-attachments/assets/24ad9f63-d701-446e-9217-c65271413ad6" />
+
+**ST-Link Programming Cable:**  
+<img width="2100" height="2800" alt="b49259136fca239e35fdfd7ea84e0243" src="https://github.com/user-attachments/assets/a7589870-ed1b-422e-ae11-d2d5849887a0" />
+
 ## 2. Project Execution
 
 ### 2.1 Environment Preparation
@@ -193,26 +204,39 @@ A: Check the serial connection (TX → RX, RX → TX, GND to GND) and ensure the
 
 #### 2.3.1 Aircraft Operating Instructions
 
-- When operating the aircraft for the first time, briefly press the power button twice in quick succession to power off the aircraft, then briefly press the power button once again to power on the UAV, ensuring that the hardware devices complete initialization properly. During restart, place the aircraft on a level surface to ensure that the gyroscope completes zero-offset calibration. The aircraft is considered to have started normally when the two LED lights below **continuously flash slowly**.
+- For the first power-on, briefly press the power button twice to shut down the aircraft, then briefly press it again to turn on the UAV, ensuring that all hardware devices complete initialization properly. During restart, place the aircraft on a level surface to allow the gyroscope to perform zero-bias calibration. When the two LED indicators below begin **flashing slowly and continuously**, this indicates that the aircraft has started up normally.
 
-- If the UAV is manufactured according to the hardware guideline document or is purchased from the official website as a **new-generation** version, this version features an additional convenient reset button, while all other functions remain **unchanged**. When operating the UAV for the first time, after the restart is complete, press the reset button once to ensure that the program proceeds with the correct timing sequence.
+- If the UAV manufactured according to the hardware guidance documents, or purchased from the official website, is of the **new-generation** version, this version features an added reset button for user convenience, while all other functions remain **unchanged**. For first-time operation, after the restart is complete, press the reset button once to ensure that the program runs in the correct timing sequence.
 
 #### 2.3.2 Remote Controller Operating Instructions
 
-- After the aircraft has started normally, press the power button at the lower left corner of the remote controller. The two front LED lights on the aircraft will then remain steadily lit.
+- After the aircraft has started up normally, press the power button at the lower left corner of the remote controller. The two front LED indicators on the aircraft will then remain steadily lit.
 
-- The left joystick of the remote controller controls throttle (up/down) and yaw angle (left/right) ↔ rotation angle. The right joystick controls pitch angle (up/down) ↔ forward/backward flight, and roll angle (left/right) ↔ left/right flight. Move the left joystick to the upper extreme position and hold for 1 second, then move it to the lower extreme position and hold for 1 second. When the two rear LED lights on the UAV begin to **flash continuously and rapidly**, the aircraft is ready for manual control.
+- The left joystick of the remote controller controls throttle (up/down) and yaw angle (left/right) → rotation angle. The right joystick controls pitch angle (up/down) → forward/backward flight, and roll angle (left/right) → left/right flight. Move the left joystick to the upper limit and hold for 1 second, then move it to the lower limit and hold for 1 second. At this point, the two rear LED indicators on the UAV will **flash rapidly and continuously**, indicating that you may now take control of the aircraft.
 
-- Before controlling the aircraft, the remote controller must undergo **zero-offset calibration**. Press and hold the upper right button for 1 second, then release it to complete calibration.
+- Before controlling the aircraft, **zero-bias calibration** of the remote controller is required. Move the throttle to the lower limit, press and hold the upper right button for 1 second, then release it to complete the calibration.
 
-- The farther upward the left joystick is pushed, the faster the aircraft ascends; conversely, the farther downward, the slower the ascent. Briefly pressing the upper right button enables altitude hold, which maintains the current height. Moving the left joystick left or right changes the aircraft's heading. For the right joystick, moving it left or right controls lateral flight, and moving it up or down controls forward/backward flight. The greater the deflection amplitude, the more pronounced the control response.
+- The higher the left joystick is pushed, the faster the aircraft ascends; conversely, the lower it is, the slower it descends. Briefly pressing the upper right button activates altitude hold, which maintains the current height. Moving the left joystick left or right changes the aircraft’s heading. For the right joystick, moving it left/right controls lateral flight (left/right), and moving it up/down controls forward/backward flight. The greater the deflection amplitude, the more pronounced the control effect.
 
-- The remote controller display shows the title on the first line and the communication channel and remaining UAV battery voltage on the second line. When the voltage drops below **3.6 V**, there is a possibility of **loss of connection** with the remote controller. It is also **not recommended** to fly the UAV below this voltage to ensure safety and prolong battery service life. The remaining area of the display indicates control deflection amplitudes in various directions using **white bars** – the more white bars, the greater the control amplitude. A larger deviation from the neutral position in a given direction indicates a greater control amplitude in that direction, and vice versa.
+- On the remote controller display, the first line shows the title, and the second line shows the communication channel and the remaining battery voltage of the UAV. When the voltage drops below **3.6 V**, there is a risk of **loss of signal** between the remote controller and the aircraft. It is also **not recommended** to fly the UAV below this voltage to ensure safety and battery lifespan. The remaining display area shows control deflection magnitudes in each direction as **white blocks** — more white blocks indicate larger deflection. A greater deviation of the displayed magnitude from the initial neutral position indicates a larger control input in that direction, and vice versa.
 
-- If the remote controller loses connection mid‑flight, the UAV will trigger its fault‑handling routine and automatically descend to the ground.
+- If the remote controller loses signal mid‑flight, the UAV will initiate its fail‑safe procedure and automatically descend to the ground.
 
-- To end the flight, ensure that the aircraft is securely landed on the ground, then briefly press the upper left button on the remote controller or briefly press the aircraft power button twice in quick succession to power off the UAV.
+- To end the flight, ensure that the aircraft is **stably landed on the ground**, then **briefly press the upper left button on the remote controller** or **briefly press the UAV power button twice** to shut down the aircraft. If you wish to terminate the flight mid‑air without powering off, you can **press and hold the upper left button** to initiate a slow descent. When the four propellers have stopped rotating and the two lower LED indicators **resume slow flashing**, the slow‑descent procedure is complete, and you may re‑arm the throttle to fly again. Any operations performed on the remote controller during the slow descent are **invalid**.
 
-- During flight, the user should take care to minimize collisions and impacts to extend the service life of the aircraft.
+- When the aircraft battery voltage drops **below 3.28 V**, the remote controller display will flash the message "F_BAT_LOW" (aircraft battery low) in the voltage display area. At that point, the aircraft will automatically perform a slow descent to the ground, and as long as "F_BAT_LOW" continues to flash on the display, any operation from the remote controller will be ignored. Only after recharging the aircraft to a sufficient level can normal flight resume. Also, note that when only **one** LED indicator at the lower right corner of the remote controller remains steadily lit, the controller battery is low and requires immediate charging.
+
+- During flight, users should ensure that the UAV avoids collisions as much as possible to prolong its service life.
+
+---
+
+## 3. Project Operation Video Demonstration
+
+
+
+https://github.com/user-attachments/assets/8141b2bb-13de-444d-b8eb-d6a9ea330f9c
+
+
+
 
 > **To be continued**
